@@ -8,14 +8,16 @@ def to_head( projectpath ):
 \usepackage{import}
 \subimport{"""+ pathlayers + r"""}{init}
 \usetikzlibrary{positioning}
+\usetikzlibrary{calc}
 \usetikzlibrary{3d} %for including external image 
 """
 
 def to_cor():
     return r"""
+\def\InputColor{rgb:blue,2;green,1;black,0.3}
 \def\ConvColor{rgb:yellow,5;red,2.5;white,5}
 \def\ConvReluColor{rgb:yellow,5;red,5;white,5}
-\def\PoolColor{rgb:red,1;black,0.3}
+\def\PoolColor{rgb:red,3;black,0.3}
 \def\UnpoolColor{rgb:blue,2;green,1;black,0.3}
 \def\FcColor{rgb:blue,5;red,2.5;white,5}
 \def\FcReluColor{rgb:blue,5;red,5;white,4}
@@ -35,9 +37,26 @@ def to_begin():
 
 # layers definition
 
-def to_input( pathfile, to='(-3,0,0)', width=8, height=8, name="temp" ):
+def to_source( pathfile, to='(-3,0,0)', width=8, height=8, name="temp" ):
     return r"""
 \node[canvas is zy plane at x=0] (""" + name + """) at """+ to +""" {\includegraphics[width="""+ str(width)+"cm"+""",height="""+ str(height)+"cm"+"""]{"""+ pathfile +"""}};
+"""
+
+# Conv
+def to_input( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=1, height=40, depth=40, caption=" " ):
+    return r"""
+\pic[shift={"""+ offset +"""}] at """+ to +""" 
+    {Box={
+        name=""" + name +""",
+        caption="""+ caption +r""",
+        xlabel={{"""+ str(n_filer) +""", }},
+        zlabel="""+ str(s_filer) +""",
+        fill=\InputColor,
+        height="""+ str(height) +""",
+        width="""+ str(width) +""",
+        depth="""+ str(depth) +"""
+        }
+    };
 """
 
 # Conv
@@ -52,6 +71,24 @@ def to_Conv( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", widt
         fill=\ConvColor,
         height="""+ str(height) +""",
         width="""+ str(width) +""",
+        depth="""+ str(depth) +"""
+        }
+    };
+"""
+
+# Conv,Conv,relu
+def to_ConvRelu( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=2, height=40, depth=40, caption="" ):
+    return r"""
+\pic[shift={ """+ offset +""" }] at """+ to +""" 
+    {RightBandedBox={
+        name="""+ name +""",
+        caption="""+ caption +""",
+        xlabel={{"""+ str(n_filer) +""",  }},
+        zlabel="""+ str(s_filer) +""",
+        fill=\ConvColor,
+        bandfill=\ConvReluColor,
+        height="""+ str(height) +""",
+        width={ """+ str(width) +"""},
         depth="""+ str(depth) +"""
         }
     };
@@ -179,27 +216,37 @@ def to_Sum( name, offset="(0,0,0)", to="(0,0,0)", radius=2.5, opacity=0.6):
 """
 
 
-def to_connection( of, to):
+def to_connection( of, to, of_side="east", to_side="west"):
     return r"""
-\draw [connection]  ("""+of+"""-east)    -- node {\midarrow} ("""+to+"""-west);
+\draw [connection]  ("""+of+"""-"""+of_side+""")    -- node {\midarrow} ("""+to+"""-"""+to_side+""");
 """
 
-def to_skip( of, to, pos=1.25):
-    return r"""
-\path ("""+ of +"""-southeast) -- ("""+ of +"""-northeast) coordinate[pos="""+ str(pos) +"""] ("""+ of +"""-top) ;
-\path ("""+ to +"""-south)  -- ("""+ to +"""-north)  coordinate[pos="""+ str(pos) +"""] ("""+ to +"""-top) ;
-\draw [copyconnection]  ("""+of+"""-northeast)  
--- node {\copymidarrow}("""+of+"""-top)
--- node {\copymidarrow}("""+to+"""-top)
--- node {\copymidarrow} ("""+to+"""-north);
-"""
+def to_skip( of, to, pos=1.25, up=False):
+    if up:
+        return r"""
+    \path ("""+ of +"""-southeast) -- ("""+ of +"""-northeast) coordinate[pos="""+ str(pos) +"""] ("""+ of +"""-top) ;
+    \path ("""+ to +"""-north)  -- ("""+ to +"""-south)  coordinate[pos="""+ str(pos) +"""] ("""+ to +"""-botton) ;
+    \draw [copyconnection]  ("""+of+"""-northeast)  
+    -- node {\copymidarrow}("""+of+"""-top)
+    -- ++(2,0) 
+    -- node {\copymidarrow}("""+to+"""-botton)
+    -- node {\copymidarrow}("""+to+"""-south);
+    """
+    else:
+        return r"""
+    \path ("""+ of +"""-southeast) -- ("""+ of +"""-northeast) coordinate[pos="""+ str(pos) +"""] ("""+ of +"""-top) ;
+    \path ("""+ to +"""-south)  -- ("""+ to +"""-north)  coordinate[pos="""+ str(pos) +"""] ("""+ to +"""-top) ;
+    \draw [copyconnection]  ("""+of+"""-northeast)  
+    -- node {\copymidarrow}("""+of+"""-top)
+    -- node {\copymidarrow}("""+to+"""-top)
+    -- node {\copymidarrow} ("""+to+"""-north);
+    """
 
 def to_end():
     return r"""
 \end{tikzpicture}
 \end{document}
 """
-
 
 def to_generate( arch, pathname="file.tex" ):
     with open(pathname, "w") as f: 
