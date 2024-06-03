@@ -30,7 +30,7 @@
             \coordinate (f)     at (\k      ,-\y/2 ,-\z/2); 
             \coordinate (g)     at (\k-\x   ,-\y/2 ,-\z/2); 
             \coordinate (h)     at (\k-\x   , \y/2 ,-\z/2); 
-            \coordinate (hrt)   at (\k-\x/3 , \y/2 ,-\z/2); %h_right_third
+            \coordinate (hrt)   at (\k-\x/3 , \y/2 ,-\z/2); %h_right_third              
             
             %fill box color 			
             \draw [box] 
@@ -50,7 +50,7 @@
                 (d) -- (a) -- (b) -- (c) -- cycle     
                 (d) -- (a) -- (h) -- (e) -- cycle;            
             	
-            \path (b) edge ["\xlabel"',midway] (c);
+            \path (b) edge ["\Huge\xlabel"',midway] (c);
             
             \xdef\LastEastx{\k} %\k persists as \LastEastx after loop 
         }%Loop ends
@@ -62,10 +62,10 @@
         \coordinate (b1) at (0 ,-\y/2 , \z/2);
         \tikzstyle{depthlabel}=[pos=0,text width=14*\z,text centered,sloped]       
         
-        \path (c) edge ["\small\zlabels"',depthlabel](f); %depth label
-        \path (b1) edge ["\ylabel",midway] (a1);  %height label 	  
+        \path (c) edge ["\huge\zlabels"',depthlabel](f); %depth label
+        \path (b1) edge ["\huge\ylabel",midway] (a1);  %height label 	  
         
-        \tikzstyle{captionlabel}=[text width=15*\LastEastx/\scale,text centered] 
+        \tikzstyle{captionlabel}=[text width=15*\LastEastx/\scale,text centered, font=\bfseries\huge] 
         \path (\LastEastx/2,-\y/2,+\z/2) + (0,-25pt) coordinate (cap) 
         edge ["\textcolor{black}{ \bf \caption}"',captionlabel] (cap); %Block caption/pic object label
          

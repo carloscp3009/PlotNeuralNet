@@ -4,7 +4,7 @@ import os
 def to_head( projectpath ):
     pathlayers = os.path.join( projectpath, 'layers/' ).replace('\\', '/')
     return r"""
-\documentclass[border=8pt, multi, tikz]{standalone} 
+\documentclass[border=0pt, multi, tikz]{standalone} 
 \usepackage{import}
 \subimport{"""+ pathlayers + r"""}{init}
 \usetikzlibrary{positioning}
@@ -23,6 +23,7 @@ def to_cor():
 \def\FcReluColor{rgb:blue,5;red,5;white,4}
 \def\SoftmaxColor{rgb:magenta,5;black,7}   
 \def\SumColor{rgb:blue,5;green,15}
+\def\ConcatColor{rgb:gray,5;white,15}
 """
 
 def to_begin():
@@ -37,10 +38,53 @@ def to_begin():
 
 # layers definition
 
-def to_source( pathfile, to='(-3,0,0)', width=8, height=8, name="temp" ):
-    return r"""
-\node[canvas is zy plane at x=0] (""" + name + """) at """+ to +""" {\includegraphics[width="""+ str(width)+"cm"+""",height="""+ str(height)+"cm"+"""]{"""+ pathfile +"""}};
-"""
+# def to_source( pathfile, to='(-3,0,0)', width=8, height=8, name="temp" , straight=False):
+#     if straight:
+#         return r"""
+#     \node[] (""" + name + """) at """+ to +""" {\includegraphics[width="""+ str(width)+"cm"+""",height="""+ str(height)+"cm"+"""]{"""+ pathfile +"""}};
+#     """
+#     return r"""
+# \node[canvas is zy plane at x=0] (""" + name + """) at """+ to +""" {\includegraphics[width="""+ str(width)+"cm"+""",height="""+ str(height)+"cm"+"""]{"""+ pathfile +"""}};
+# """
+# def to_source(pathfile, to='(-3,0,0)', width=8, height=8, name="temp", straight=False, caption="", caption_size=30):
+#     tikz_code = r"""
+#     \node[{}] ({}) at {} {{
+#         \begin{{tikzpicture}}
+#             \node[anchor=south] (image) {{\includegraphics[width={}cm,height={}cm]{{{}}}}};
+#             \node[below=of image] {{\fontsize{{{}}}{{1em}}\bfseries {}}};
+#         \end{{tikzpicture}}
+#     }};
+#     """
+#     if straight:
+#         anchor = ""
+#     else:
+#         anchor = "canvas is zy plane at x=0"
+        
+#     return tikz_code.format(anchor, name, to, width, height, pathfile, caption_size, caption)
+def to_text(text, to='(0,0,0)', name="textnode", caption_size=12):
+    formatted_text = text.replace("\n", r"\\")
+    tikz_code = r"""
+    \node[{}] ({}) at {} {{\fontsize{{{}}}{{1em}}\selectfont\bfseries {}}};
+    """
+    return tikz_code.format("", name, to, caption_size, formatted_text)
+
+def to_source(pathfile, to='(-3,0,0)', width=8, height=8, name="temp", straight=False, caption="", caption_size=20):
+    tikz_code = r"""
+    \node[{}] ({}) at {} {{
+        \begin{{tikzpicture}}
+            \node[anchor=south] (image) {{\includegraphics[width={}cm,height={}cm]{{{}}}}};
+            \node[below=of image, align=center] {{\fontsize{{{}}}{{1em}}\selectfont\bfseries {} }};
+        \end{{tikzpicture}}
+    }};
+    """
+    if straight:
+        anchor = ""
+    else:
+        anchor = "canvas is zy plane at x=0"
+        
+    return tikz_code.format(anchor, name, to, width, height, pathfile, caption_size, caption)
+
+
 
 # Conv
 def to_input( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=1, height=40, depth=40, caption=" " ):
@@ -76,6 +120,42 @@ def to_Conv( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", widt
     };
 """
 
+# Conv
+def to_Box( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=1, height=40, depth=40, caption=" " , color="", opacity=0.2):
+    return r"""
+\pic[shift={"""+ offset +"""}] at """+ to +""" 
+    {Box={
+        name=""" + name +""",
+        caption="""+ caption +r""",
+        xlabel={{"""+ str(n_filer) +""", }},
+        zlabel="""+ str(s_filer) +""",
+        fill="""+ color +""",
+        opacity="""+ str(opacity) +""",
+        height="""+ str(height) +""",
+        width="""+ str(width) +""",
+        depth="""+ str(depth) +"""
+        }
+    };
+"""
+
+# Conv
+def to_ConeBox( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=1, height=40, depth=40, caption=" " , color="", opacity=0.2):
+    return r"""
+\pic[shift={"""+ offset +"""}] at """+ to +""" 
+    {SBox={
+        name=""" + name +""",
+        caption="""+ caption +r""",
+        xlabel={{"""+ str(n_filer) +""", }},
+        zlabel="""+ str(s_filer) +""",
+        fill="""+ color +""",
+        opacity="""+ str(opacity) +""",
+        height="""+ str(height) +""",
+        width="""+ str(width) +""",
+        depth="""+ str(depth) +"""
+        }
+    };
+"""
+
 # Conv,Conv,relu
 def to_ConvRelu( name, s_filer=256, n_filer=64, offset="(0,0,0)", to="(0,0,0)", width=2, height=40, depth=40, caption="" ):
     return r"""
@@ -102,7 +182,7 @@ def to_ConvConvRelu( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(
     {RightBandedBox={
         name="""+ name +""",
         caption="""+ caption +""",
-        xlabel={{ """+ str(n_filer[0]) +""", """+ str(n_filer[1]) +""" }},
+        xlabel={{ """+ str(f'{n_filer[1]}')+""", """+ str(" ") +""" }},
         zlabel="""+ str(s_filer) +""",
         fill=\ConvColor,
         bandfill=\ConvReluColor,
@@ -112,8 +192,6 @@ def to_ConvConvRelu( name, s_filer=256, n_filer=(64,64), offset="(0,0,0)", to="(
         }
     };
 """
-
-
 
 # Pool
 def to_Pool(name, offset="(0,0,0)", to="(0,0,0)", width=1, height=32, depth=32, opacity=0.5, caption=" "):
@@ -241,6 +319,11 @@ def to_skip( of, to, pos=1.25, up=False):
     -- node {\copymidarrow}("""+to+"""-top)
     -- node {\copymidarrow} ("""+to+"""-north);
     """
+
+def to_lstm(to='10,10,10', offset="(10,0,0)"):
+    return r"""
+\draw[shift={"""+ offset +"""}, thick, -> ] ("""+to+"""-southeast) arc (0:320:0.7);
+"""
 
 def to_end():
     return r"""
